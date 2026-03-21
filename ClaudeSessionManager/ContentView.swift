@@ -1,0 +1,315 @@
+import SwiftUI
+
+struct ContentView: View {
+    @ObservedObject var l10n = L10n.shared
+    @ObservedObject var settings = AppSettings.shared
+    @State private var sessions: [ClaudeSession] = []
+    @State private var searchText = ""
+    @State private var selectedSession: ClaudeSession?
+    @State private var cursorIndex: Int = 0
+    @State private var showSettings = false
+    @FocusState private var isSearchFocused: Bool
+
+    var filteredSessions: [ClaudeSession] {
+        if searchText.isEmpty { return sessions }
+        let q = searchText.lowercased()
+        return sessions.filter {
+            $0.projectName.lowercased().contains(q) ||
+            $0.firstMessage.lowercased().contains(q) ||
+            $0.project.lowercased().contains(q)
+        }
+    }
+
+    var body: some View {
+        if showSettings {
+            SettingsView(
+                onSave: {
+                    showSettings = false
+                    NotificationCenter.default.post(name: .hotkeyChanged, object: nil)
+                },
+                onCancel: { showSettings = false }
+            )
+        } else {
+            mainView
+        }
+    }
+
+    private var mainView: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text(l10n.t(.appTitle))
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button(action: { sessions = SessionLoader.loadSessions() }) {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.borderless)
+                .help(l10n.t(.refreshSessions))
+
+                Button(action: { showSettings = true }) {
+                    Image(systemName: "gearshape")
+                }
+                .buttonStyle(.borderless)
+                .help(l10n.t(.settings))
+            }
+            .padding()
+
+            // Search — always focused
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                TextField(l10n.t(.searchPlaceholder), text: $searchText)
+                    .textFieldStyle(.plain)
+                    .focused($isSearchFocused)
+                    .onChange(of: isSearchFocused) { _, focused in
+                        if !focused {
+                            DispatchQueue.main.async { isSearchFocused = true }
+                        }
+                    }
+                    .onChange(of: searchText) {
+                        cursorIndex = 0
+                    }
+                    .onSubmit {
+                        let list = filteredSessions
+                        if !list.isEmpty && cursorIndex < list.count {
+                            openSessionInTerminal(list[cursorIndex])
+                        }
+                    }
+                if !searchText.isEmpty {
+                    Button(action: { searchText = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.borderless)
+                }
+            }
+            .padding(8)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(8)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+
+            Divider()
+
+            // Session list
+            if filteredSessions.isEmpty {
+                Spacer()
+                Text(sessions.isEmpty ? l10n.t(.noSessionsFound) : l10n.t(.noMatchingFound))
+                    .foregroundColor(.secondary)
+                Spacer()
+            } else {
+                ScrollViewReader { proxy in
+                    List(Array(filteredSessions.enumerated()), id: \.element.id, selection: $selectedSession) { index, session in
+                        SessionRow(session: session, isCursored: index == cursorIndex)
+                            .id(session.id)
+                            .onTapGesture(count: 2) {
+                                openSessionInTerminal(session)
+                            }
+                            .onTapGesture(count: 1) {
+                                cursorIndex = index
+                            }
+                            .contentShape(Rectangle())
+                    }
+                    .listStyle(.inset(alternatesRowBackgrounds: true))
+                    .onChange(of: cursorIndex) { _, newIndex in
+                        let list = filteredSessions
+                        if newIndex >= 0 && newIndex < list.count {
+                            withAnimation {
+                                proxy.scrollTo(list[newIndex].id, anchor: .center)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // Footer
+            HStack {
+                Text(l10n.t(.sessionsCount, filteredSessions.count))
+                    .foregroundColor(.secondary)
+                    .font(.caption)
+                Spacer()
+                if !filteredSessions.isEmpty && cursorIndex < filteredSessions.count {
+                    Button(l10n.t(.openInTerminal)) {
+                        openSessionInTerminal(filteredSessions[cursorIndex])
+                    }
+                    .controlSize(.small)
+                }
+            }
+            .padding(8)
+            .padding(.horizontal, 4)
+        }
+        .frame(minWidth: 500, minHeight: 300)
+        .onAppear {
+            sessions = SessionLoader.loadSessions()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                isSearchFocused = true
+            }
+            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                return handleKeyEvent(event)
+            }
+        }
+        .background(
+            Group {
+                Button("") { copyCurrentSessionCommand() }
+                    .keyboardShortcut("/", modifiers: .command)
+                Button("") { sessions = SessionLoader.loadSessions() }
+                    .keyboardShortcut("r", modifiers: .command)
+                Button("") { showSettings = true }
+                    .keyboardShortcut(",", modifiers: .command)
+            }
+            .hidden()
+        )
+    }
+
+    private func handleKeyEvent(_ event: NSEvent) -> NSEvent? {
+        let list = filteredSessions
+        guard !list.isEmpty else { return event }
+
+        switch event.keyCode {
+        case 125: // Down arrow
+            if cursorIndex < list.count - 1 {
+                cursorIndex += 1
+            }
+            return nil
+        case 126: // Up arrow
+            if cursorIndex > 0 {
+                cursorIndex -= 1
+            }
+            return nil
+        default:
+            return event
+        }
+    }
+
+    private func copyCurrentSessionCommand() {
+        let list = filteredSessions
+        guard !list.isEmpty && cursorIndex < list.count else { return }
+        let session = list[cursorIndex]
+        let cmd = "cd \(session.project) && claude -r \(session.id)"
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(cmd, forType: .string)
+    }
+
+    private func openSessionInTerminal(_ session: ClaudeSession) {
+        let sessionCmd = "cd \(session.project) && claude -r \(session.id)"
+        let template = settings.terminalCommand
+        let script = template.replacingOccurrences(of: "{cmd}", with: sessionCmd)
+
+        if let appleScript = NSAppleScript(source: script) {
+            var error: NSDictionary?
+            appleScript.executeAndReturnError(&error)
+            if let error = error {
+                print("AppleScript error: \(error)")
+            }
+        }
+    }
+}
+
+struct SessionRow: View {
+    @ObservedObject var l10n = L10n.shared
+    let session: ClaudeSession
+    let isCursored: Bool
+    @State private var copied = false
+
+    private var timeAgo: String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: session.lastTimestamp, relativeTo: Date())
+    }
+
+    private var resumeCommand: String {
+        "cd \(session.project) && claude -r \(session.id)"
+    }
+
+    private var copyHotkeyLabel: String {
+        AppSettings.shared.copyHotkey.displayString
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            // Cursor indicator
+            Image(systemName: "chevron.right")
+                .font(.caption2)
+                .foregroundColor(isCursored ? .accentColor : .clear)
+                .frame(width: 8)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Image(systemName: "folder")
+                        .foregroundColor(.accentColor)
+                        .font(.caption)
+                    Text(session.projectName)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+                    Spacer()
+                    Text(timeAgo)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Text(session.firstMessage.isEmpty ? l10n.t(.empty) : session.firstMessage)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+
+                HStack {
+                    Text(session.project)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                    Spacer()
+                    Text(l10n.t(.msgs, session.messageCount))
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
+            // Copy button
+            Button(action: {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(resumeCommand, forType: .string)
+                copied = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    copied = false
+                }
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                    Text(copied ? l10n.t(.copied) : copyHotkeyLabel)
+                        .font(.caption2)
+                }
+                .font(.body)
+                .foregroundColor(copied ? .green : .secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                )
+            }
+            .buttonStyle(.borderless)
+            .help(l10n.t(.copyHotkey) + " (\(copyHotkeyLabel))")
+        }
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isCursored ? Color.accentColor.opacity(0.1) : Color.clear)
+        )
+    }
+}
+
+extension Notification.Name {
+    static let hotkeyChanged = Notification.Name("hotkeyChanged")
+}
+
+#Preview {
+    ContentView()
+}

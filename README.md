@@ -4,6 +4,18 @@ A lightweight macOS menu bar app for browsing and resuming [Claude Code](https:/
 
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue) ![Swift](https://img.shields.io/badge/Swift-5.0-orange) ![License](https://img.shields.io/badge/license-MIT-green) ![Version](https://img.shields.io/badge/version-0.0.1-brightgreen)
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/sessionmanager1.png" width="600" alt="Session list view">
+  <br><em>Browse and search your Claude Code sessions</em>
+</p>
+
+<p align="center">
+  <img src="screenshots/sessionmanager2.png" width="600" alt="Settings view">
+  <br><em>Configurable settings: hotkeys, language, terminal command</em>
+</p>
+
 ## Features
 
 - **Menu bar app** — lives in the macOS menu bar, no Dock icon

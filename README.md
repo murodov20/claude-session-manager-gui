@@ -7,11 +7,6 @@ A lightweight macOS menu bar app for browsing and resuming [Claude Code](https:/
 ## Screenshots
 
 <p align="center">
-  <img src="screenshots/sessionmanager1.png" width="600" alt="Session list view">
-  <br><em>Browse and search your Claude Code sessions</em>
-</p>
-
-<p align="center">
   <img src="screenshots/sessionmanager2.png" width="600" alt="Settings view">
   <br><em>Configurable settings: hotkeys, language, terminal command</em>
 </p>

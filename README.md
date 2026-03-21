@@ -22,7 +22,14 @@ A lightweight macOS menu bar app for browsing and resuming [Claude Code](https:/
 - Xcode 15.0+
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
 
-## Build
+## Installation
+
+```bash
+brew tap murodov20/tap
+brew install --cask claude-session-manager
+```
+
+## Build from source
 
 1. Clone the repository:
    ```bash

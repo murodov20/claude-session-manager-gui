@@ -59,44 +59,4 @@ class SessionLoader {
         }
         .sorted { $0.lastTimestamp > $1.lastTimestamp }
     }
-
-    static func fakeSessions() -> [ClaudeSession] {
-        [
-            ClaudeSession(
-                id: "a1b2c3d4-1111-2222-3333-444455556666",
-                project: "/Users/dev/projects/weather-app",
-                firstMessage: "Add dark mode support and update the color palette for all screens",
-                lastTimestamp: Date().addingTimeInterval(-300),
-                messageCount: 12
-            ),
-            ClaudeSession(
-                id: "b2c3d4e5-2222-3333-4444-555566667777",
-                project: "/Users/dev/projects/api-gateway",
-                firstMessage: "Fix rate limiting middleware to handle burst traffic correctly",
-                lastTimestamp: Date().addingTimeInterval(-1800),
-                messageCount: 8
-            ),
-            ClaudeSession(
-                id: "c3d4e5f6-3333-4444-5555-666677778888",
-                project: "/Users/dev/projects/blog-platform",
-                firstMessage: "Implement markdown preview with syntax highlighting and image upload",
-                lastTimestamp: Date().addingTimeInterval(-7200),
-                messageCount: 23
-            ),
-            ClaudeSession(
-                id: "d4e5f6a7-4444-5555-6666-777788889999",
-                project: "/Users/dev/projects/mobile-app",
-                firstMessage: "Set up push notifications for iOS and Android using Firebase",
-                lastTimestamp: Date().addingTimeInterval(-18000),
-                messageCount: 5
-            ),
-            ClaudeSession(
-                id: "e5f6a7b8-5555-6666-7777-888899990000",
-                project: "/Users/dev/projects/dashboard",
-                firstMessage: "Create analytics dashboard with real-time charts and CSV export",
-                lastTimestamp: Date().addingTimeInterval(-86400),
-                messageCount: 31
-            ),
-        ]
-    }
 }

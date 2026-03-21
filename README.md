@@ -73,6 +73,10 @@ tell application "iTerm2"
 end tell
 ```
 
+## Note
+
+This project was almost entirely written with the help of AI ([Claude Code](https://docs.anthropic.com/en/docs/claude-code)). If you find any bugs or issues, feel free to open a PR — contributions are welcome!
+
 ## License
 
 [MIT](LICENSE)

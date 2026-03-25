@@ -30,6 +30,9 @@ enum L10nKey: String {
     case msgs
     case empty
     case copied
+    case viewSession
+    case noMessagesFound
+    case quit
 
     // Settings
     case settings
@@ -84,6 +87,9 @@ class L10n: ObservableObject {
             .msgs: "%d msgs",
             .empty: "(empty)",
             .copied: "Copied!",
+            .viewSession: "View session",
+            .noMessagesFound: "No messages found",
+            .quit: "Quit",
             .settings: "Settings",
             .language: "Language",
             .globalHotkey: "Toggle popover",
@@ -109,6 +115,9 @@ class L10n: ObservableObject {
             .msgs: "%d сообщ.",
             .empty: "(пусто)",
             .copied: "Скопировано!",
+            .viewSession: "Просмотр сессии",
+            .noMessagesFound: "Сообщения не найдены",
+            .quit: "Выход",
             .settings: "Настройки",
             .language: "Язык",
             .globalHotkey: "Открыть/закрыть",
@@ -134,6 +143,9 @@ class L10n: ObservableObject {
             .msgs: "%d رسائل",
             .empty: "(فارغ)",
             .copied: "تم النسخ!",
+            .viewSession: "عرض الجلسة",
+            .noMessagesFound: "لم يتم العثور على رسائل",
+            .quit: "خروج",
             .settings: "الإعدادات",
             .language: "اللغة",
             .globalHotkey: "فتح/إغلاق",
@@ -159,6 +171,9 @@ class L10n: ObservableObject {
             .msgs: "%d xabar",
             .empty: "(bo'sh)",
             .copied: "Nusxalandi!",
+            .viewSession: "Sessiyani ko'rish",
+            .noMessagesFound: "Xabarlar topilmadi",
+            .quit: "Chiqish",
             .settings: "Sozlamalar",
             .language: "Til",
             .globalHotkey: "Ochish/Yopish",

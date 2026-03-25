@@ -17,6 +17,7 @@ struct HotkeyCombo: Equatable {
 
     static let defaultToggle = HotkeyCombo(keyCode: UInt32(kVK_F12), modifiers: UInt32(cmdKey))
     static let defaultCopy = HotkeyCombo(keyCode: 44, modifiers: UInt32(cmdKey)) // Cmd+/
+    static let defaultView = HotkeyCombo(keyCode: 31, modifiers: UInt32(cmdKey)) // Cmd+O
     static let defaultRefresh = HotkeyCombo(keyCode: 15, modifiers: UInt32(cmdKey)) // Cmd+R
 
     func save(prefix: String) {
@@ -57,6 +58,7 @@ class AppSettings: ObservableObject {
 
     @Published var toggleHotkey: HotkeyCombo
     @Published var copyHotkey: HotkeyCombo
+    @Published var viewHotkey: HotkeyCombo
     @Published var refreshHotkey: HotkeyCombo
     @Published var sessionsFolder: String
     @Published var terminalCommand: String
@@ -80,6 +82,7 @@ class AppSettings: ObservableObject {
     private init() {
         self.toggleHotkey = HotkeyCombo.load(prefix: "hotkey_toggle", fallback: .defaultToggle)
         self.copyHotkey = HotkeyCombo.load(prefix: "hotkey_copy", fallback: .defaultCopy)
+        self.viewHotkey = HotkeyCombo.load(prefix: "hotkey_view", fallback: .defaultView)
         self.refreshHotkey = HotkeyCombo.load(prefix: "hotkey_refresh", fallback: .defaultRefresh)
         self.sessionsFolder = UserDefaults.standard.string(forKey: "sessionsFolder") ?? Self.defaultSessionsFolder
         self.terminalCommand = UserDefaults.standard.string(forKey: "terminalCommand") ?? Self.defaultTerminalCommand
@@ -88,6 +91,7 @@ class AppSettings: ObservableObject {
     func save() {
         toggleHotkey.save(prefix: "hotkey_toggle")
         copyHotkey.save(prefix: "hotkey_copy")
+        viewHotkey.save(prefix: "hotkey_view")
         refreshHotkey.save(prefix: "hotkey_refresh")
         UserDefaults.standard.set(sessionsFolder, forKey: "sessionsFolder")
         UserDefaults.standard.set(terminalCommand, forKey: "terminalCommand")

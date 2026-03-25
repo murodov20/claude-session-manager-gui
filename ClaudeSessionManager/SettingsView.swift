@@ -10,13 +10,14 @@ struct SettingsView: View {
     @State private var selectedLanguage: AppLanguage
     @State private var toggleHotkey: HotkeyCombo
     @State private var copyHotkey: HotkeyCombo
+    @State private var viewHotkey: HotkeyCombo
     @State private var refreshHotkey: HotkeyCombo
     @State private var sessionsFolder: String
     @State private var terminalCommand: String
     @State private var recordingHotkey: RecordingTarget?
 
     enum RecordingTarget {
-        case toggle, copy, refresh
+        case toggle, copy, view, refresh
     }
 
     init(onSave: @escaping () -> Void, onCancel: @escaping () -> Void) {
@@ -26,6 +27,7 @@ struct SettingsView: View {
         _selectedLanguage = State(initialValue: L10n.shared.current)
         _toggleHotkey = State(initialValue: s.toggleHotkey)
         _copyHotkey = State(initialValue: s.copyHotkey)
+        _viewHotkey = State(initialValue: s.viewHotkey)
         _refreshHotkey = State(initialValue: s.refreshHotkey)
         _sessionsFolder = State(initialValue: s.sessionsFolder)
         _terminalCommand = State(initialValue: s.terminalCommand)
@@ -71,6 +73,7 @@ struct SettingsView: View {
                     settingSection(l10n.t(.globalHotkey)) {
                         hotkeyRow(label: l10n.t(.globalHotkey), combo: $toggleHotkey, target: .toggle)
                         hotkeyRow(label: l10n.t(.copyHotkey), combo: $copyHotkey, target: .copy)
+                        hotkeyRow(label: l10n.t(.viewSession), combo: $viewHotkey, target: .view)
                         hotkeyRow(label: l10n.t(.refreshHotkey), combo: $refreshHotkey, target: .refresh)
                     }
 
@@ -188,6 +191,7 @@ struct SettingsView: View {
     private func saveSettings() {
         settings.toggleHotkey = toggleHotkey
         settings.copyHotkey = copyHotkey
+        settings.viewHotkey = viewHotkey
         settings.refreshHotkey = refreshHotkey
         settings.sessionsFolder = sessionsFolder
         settings.terminalCommand = terminalCommand

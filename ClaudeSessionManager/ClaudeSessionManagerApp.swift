@@ -29,7 +29,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: "Claude Sessions")
+            button.image = createClaudeIcon()
             button.action = #selector(togglePopover)
             button.target = self
         }
@@ -65,6 +65,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showPopover() {
         guard let button = statusItem.button else { return }
+        NotificationCenter.default.post(name: .refreshSessions, object: nil)
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -123,5 +124,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             RemoveEventHandler(handler)
             eventHandlerRef = nil
         }
+    }
+
+    /// Creates a Claude-like sparkle icon for the menu bar
+    private func createClaudeIcon() -> NSImage {
+        let size: CGFloat = 18
+        let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
+            let cx = rect.midX
+            let cy = rect.midY
+            let r: CGFloat = size * 0.42
+
+            let path = NSBezierPath()
+            let points = 6
+            for i in 0..<(points * 2) {
+                let angle = (CGFloat(i) * .pi / CGFloat(points)) - .pi / 2
+                let radius = i % 2 == 0 ? r : r * 0.38
+                let x = cx + radius * cos(angle)
+                let y = cy + radius * sin(angle)
+                if i == 0 {
+                    path.move(to: NSPoint(x: x, y: y))
+                } else {
+                    path.line(to: NSPoint(x: x, y: y))
+                }
+            }
+            path.close()
+
+            NSColor.controlTextColor.setFill()
+            path.fill()
+            return true
+        }
+        image.isTemplate = true
+        return image
     }
 }

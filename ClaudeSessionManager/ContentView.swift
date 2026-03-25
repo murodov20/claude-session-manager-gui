@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var selectedSession: ClaudeSession?
     @State private var cursorIndex: Int = 0
     @State private var showSettings = false
+    @State private var viewingSession: ClaudeSession?
     @FocusState private var isSearchFocused: Bool
 
     var filteredSessions: [ClaudeSession] {
@@ -16,12 +17,16 @@ struct ContentView: View {
         return sessions.filter {
             $0.projectName.lowercased().contains(q) ||
             $0.firstMessage.lowercased().contains(q) ||
-            $0.project.lowercased().contains(q)
+            $0.lastMessage.lowercased().contains(q) ||
+            $0.project.lowercased().contains(q) ||
+            $0.allPrompts.contains { $0.lowercased().contains(q) }
         }
     }
 
     var body: some View {
-        if showSettings {
+        if let session = viewingSession {
+            SessionDetailView(session: session, onBack: { viewingSession = nil })
+        } else if showSettings {
             SettingsView(
                 onSave: {
                     showSettings = false
@@ -42,17 +47,28 @@ struct ContentView: View {
                     .font(.title2)
                     .fontWeight(.semibold)
                 Spacer()
-                Button(action: { sessions = SessionLoader.loadSessions() }) {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .buttonStyle(.borderless)
-                .help(l10n.t(.refreshSessions))
+                HStack(spacing: 8) {
+                    Button(action: { sessions = SessionLoader.loadSessions() }) {
+                        Image(systemName: "arrow.clockwise")
+                            .frame(width: 16, height: 16)
+                    }
+                    .buttonStyle(.borderless)
+                    .help(l10n.t(.refreshSessions))
 
-                Button(action: { showSettings = true }) {
-                    Image(systemName: "gearshape")
+                    Button(action: { showSettings = true }) {
+                        Image(systemName: "gearshape")
+                            .frame(width: 16, height: 16)
+                    }
+                    .buttonStyle(.borderless)
+                    .help(l10n.t(.settings))
+
+                    Button(action: { NSApp.terminate(nil) }) {
+                        Image(systemName: "power")
+                            .frame(width: 16, height: 16)
+                    }
+                    .buttonStyle(.borderless)
+                    .help(l10n.t(.quit))
                 }
-                .buttonStyle(.borderless)
-                .help(l10n.t(.settings))
             }
             .padding()
 
@@ -102,15 +118,19 @@ struct ContentView: View {
             } else {
                 ScrollViewReader { proxy in
                     List(Array(filteredSessions.enumerated()), id: \.element.id, selection: $selectedSession) { index, session in
-                        SessionRow(session: session, isCursored: index == cursorIndex)
-                            .id(session.id)
-                            .onTapGesture(count: 2) {
-                                openSessionInTerminal(session)
-                            }
-                            .onTapGesture(count: 1) {
-                                cursorIndex = index
-                            }
-                            .contentShape(Rectangle())
+                        SessionRow(
+                            session: session,
+                            isCursored: index == cursorIndex,
+                            onView: { viewingSession = session }
+                        )
+                        .id(session.id)
+                        .onTapGesture(count: 2) {
+                            openSessionInTerminal(session)
+                        }
+                        .onTapGesture(count: 1) {
+                            cursorIndex = index
+                        }
+                        .contentShape(Rectangle())
                     }
                     .listStyle(.inset(alternatesRowBackgrounds: true))
                     .onChange(of: cursorIndex) { _, newIndex in
@@ -132,6 +152,11 @@ struct ContentView: View {
                     .foregroundColor(.secondary)
                     .font(.caption)
                 Spacer()
+                Button("GitHub") {
+                    NSWorkspace.shared.open(URL(string: "https://github.com/murodov20/claude-session-manager-gui")!)
+                }
+                .controlSize(.small)
+
                 if !filteredSessions.isEmpty && cursorIndex < filteredSessions.count {
                     Button(l10n.t(.openInTerminal)) {
                         openSessionInTerminal(filteredSessions[cursorIndex])
@@ -152,6 +177,9 @@ struct ContentView: View {
                 return handleKeyEvent(event)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .refreshSessions)) { _ in
+            sessions = SessionLoader.loadSessions()
+        }
         .background(
             Group {
                 Button("") { copyCurrentSessionCommand() }
@@ -160,6 +188,8 @@ struct ContentView: View {
                     .keyboardShortcut("r", modifiers: .command)
                 Button("") { showSettings = true }
                     .keyboardShortcut(",", modifiers: .command)
+                Button("") { viewCurrentSession() }
+                    .keyboardShortcut("o", modifiers: .command)
             }
             .hidden()
         )
@@ -194,6 +224,12 @@ struct ContentView: View {
         NSPasteboard.general.setString(cmd, forType: .string)
     }
 
+    private func viewCurrentSession() {
+        let list = filteredSessions
+        guard !list.isEmpty && cursorIndex < list.count else { return }
+        viewingSession = list[cursorIndex]
+    }
+
     private func openSessionInTerminal(_ session: ClaudeSession) {
         let sessionCmd = "cd \(session.project) && claude -r \(session.id)"
         let template = settings.terminalCommand
@@ -213,7 +249,7 @@ struct SessionRow: View {
     @ObservedObject var l10n = L10n.shared
     let session: ClaudeSession
     let isCursored: Bool
-    @State private var copied = false
+    let onView: () -> Void
 
     private var timeAgo: String {
         let formatter = RelativeDateTimeFormatter()
@@ -227,6 +263,10 @@ struct SessionRow: View {
 
     private var copyHotkeyLabel: String {
         AppSettings.shared.copyHotkey.displayString
+    }
+
+    private var viewHotkeyLabel: String {
+        AppSettings.shared.viewHotkey.displayString
     }
 
     var body: some View {
@@ -251,7 +291,7 @@ struct SessionRow: View {
                         .foregroundColor(.secondary)
                 }
 
-                Text(session.firstMessage.isEmpty ? l10n.t(.empty) : session.firstMessage)
+                Text(session.lastMessage.isEmpty ? l10n.t(.empty) : session.lastMessage)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
@@ -268,30 +308,44 @@ struct SessionRow: View {
                 }
             }
 
+            // View button
+            Button(action: onView) {
+                Image(systemName: "eye")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(Color(nsColor: .controlBackgroundColor))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                    )
+            }
+            .buttonStyle(.borderless)
+            .help(l10n.t(.viewSession) + " (\(viewHotkeyLabel))")
+
             // Copy button
             Button(action: {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(resumeCommand, forType: .string)
-                copied = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    copied = false
-                }
             }) {
-                HStack(spacing: 4) {
-                    Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                    Text(copied ? l10n.t(.copied) : copyHotkeyLabel)
-                        .font(.caption2)
+                HStack(spacing: 3) {
+                    Image(systemName: "doc.on.doc")
+                    Text(copyHotkeyLabel)
+                        .font(.system(size: 9))
                 }
-                .font(.body)
-                .foregroundColor(copied ? .green : .secondary)
-                .padding(.horizontal, 8)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 6)
                 .padding(.vertical, 4)
                 .background(
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: 5)
                         .fill(Color(nsColor: .controlBackgroundColor))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: 5)
                         .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
                 )
             }
@@ -308,6 +362,7 @@ struct SessionRow: View {
 
 extension Notification.Name {
     static let hotkeyChanged = Notification.Name("hotkeyChanged")
+    static let refreshSessions = Notification.Name("refreshSessions")
 }
 
 #Preview {

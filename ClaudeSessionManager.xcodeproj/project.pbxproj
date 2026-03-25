@@ -13,6 +13,8 @@
 		A1000004 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005; };
 		A1000005 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006; };
 		A1000006 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007; };
+		A1000007 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008; };
+		A1000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000009; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +25,8 @@
 		A2000005 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		A2000006 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		A2000007 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A2000008 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+		A2000009 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A3000001 /* ClaudeSessionManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeSessionManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -35,6 +39,17 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A4000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000008 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXGroup section */
 		A5000001 = {
@@ -54,6 +69,8 @@
 				A2000005 /* Localization.swift */,
 				A2000006 /* AppSettings.swift */,
 				A2000007 /* SettingsView.swift */,
+				A2000008 /* SessionDetailView.swift */,
+				A2000009 /* Assets.xcassets */,
 				A2000004 /* ClaudeSessionManager.entitlements */,
 			);
 			path = ClaudeSessionManager;
@@ -76,6 +93,7 @@
 			buildPhases = (
 				A7000001 /* Sources */,
 				A4000001 /* Frameworks */,
+				A4000002 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -125,6 +143,7 @@
 				A1000004 /* Localization.swift in Sources */,
 				A1000005 /* AppSettings.swift in Sources */,
 				A1000006 /* SettingsView.swift in Sources */,
+				A1000007 /* SessionDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -2,7 +2,7 @@
 
 A lightweight macOS menu bar app for browsing and resuming [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions.
 
-![macOS](https://img.shields.io/badge/macOS-14.0+-blue) ![Swift](https://img.shields.io/badge/Swift-5.0-orange) ![License](https://img.shields.io/badge/license-MIT-green) ![Version](https://img.shields.io/badge/version-0.0.1-brightgreen)
+![macOS](https://img.shields.io/badge/macOS-14.0+-blue) ![Swift](https://img.shields.io/badge/Swift-5.0-orange) ![License](https://img.shields.io/badge/license-MIT-green) ![Version](https://img.shields.io/badge/version-0.0.2-brightgreen)
 
 ## Screenshots
 
